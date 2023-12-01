@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use regex::Regex;
 
 
-const CALIBRATION_RAW: &str = include_str!("calibration_raw.txt");
+const CALIBRATION_RAW: &str = include_str!("../calibration_raw.txt");
 
 fn part1() { 
     let codes = CALIBRATION_RAW.split("\n")
@@ -94,7 +94,6 @@ fn part2 () {
     let sum = codes.into_iter()
         .fold(0_u32, |a, b| {
             if let Ok(num) = b {
-                println!("{}", num);
                 a + num
             } else {
                 a
