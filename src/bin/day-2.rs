@@ -44,9 +44,38 @@ fn part1() {
 }
 
 fn part2() {
-    todo!()
+    let game_powers = TEST_DATA.split("\n")
+        .map(|line| {
+            if let Some((game_header, game_sets))  = line.split_once(":") {
+                let (_, game_num_str) = game_header.trim().split_once(" ").expect("could not parse game header");
+                let game_num = game_num_str.parse::<u32>().expect("unable to extract game number");
+                let mut min_cubes: HashMap<&str, u32> = HashMap::new();
+                game_sets.split(";")
+                    .for_each(|set| {
+                        set
+                            .split(",")
+                            .for_each(|freq_color| {
+                                let (num, color) = freq_color.trim().split_once(" ").expect("could not extract color freq pair");
+                                let num = num.parse::<u32>().expect("number of colors is not a number");
+                                min_cubes
+                                    .entry(color)
+                                    .and_modify(|current| {
+                                        if num > *current {
+                                            *current = num;
+                                        }
+                                    })
+                                    .or_insert(num);
+                            });
+                    });
+                min_cubes.values().product::<u32>()
+            } else {
+                0
+            }
+        });
+    let sol: u32 = game_powers.sum();
+    println!("{}", sol);
 }
 fn main() {
     part1();
-    //part2();
+    part2();
 }
