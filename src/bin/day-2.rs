@@ -46,9 +46,7 @@ fn part1() {
 fn part2() {
     let game_powers = TEST_DATA.split("\n")
         .map(|line| {
-            if let Some((game_header, game_sets))  = line.split_once(":") {
-                let (_, game_num_str) = game_header.trim().split_once(" ").expect("could not parse game header");
-                let game_num = game_num_str.parse::<u32>().expect("unable to extract game number");
+            if let Some((_, game_sets))  = line.split_once(":") {
                 let mut min_cubes: HashMap<&str, u32> = HashMap::new();
                 game_sets.split(";")
                     .for_each(|set| {
