@@ -3,7 +3,7 @@ const INPUT_DATA: &str = include_str!("../../data/input_day_5.txt");
 #[derive(Debug)]
 struct InputData
 where {
-    seeds: Vec<u64>,
+    seeds: Vec<SeedRange>,
     seed_to_soil_map: Vec<Range>,
     soil_to_fertilizer_map: Vec<Range>,
     fertilizer_to_water_map: Vec<Range>,
@@ -13,12 +13,23 @@ where {
     humidity_to_location_map: Vec<Range>,
 }
 
-fn parse_pair(s: &str) -> Result<((u64, u64), &str), &str> {
+fn parse_pair(s: &str) -> Result<(SeedRange, &str), &str> {
+    if s.trim().is_empty() {
+        return Err("done")
+    }
     if let Some((first, rest)) = s.split_once(" ") {
         if let Some((second, rest)) = rest.split_once(" ") {
-            Ok(((first.parse::<u64>().unwrap(), second.parse::<u64>().unwrap()), rest))
+            Ok(
+                (SeedRange {
+                    range_start: first.parse::<u64>().unwrap(),
+                    range_len: second.parse::<u64>().unwrap(),
+                 }, rest))
         } else {
-            Err("no second")
+            Ok(
+                (SeedRange {
+                    range_start: first.parse::<u64>().unwrap(),
+                    range_len: rest.parse::<u64>().unwrap(),
+                 }, ""))
         }
     } else {
         Err("no first")
@@ -39,17 +50,23 @@ macro_rules! process_section {
 impl From<&str> for InputData {
     fn from(input: &str) -> Self {
         let mut lines = input.lines();
-        let (_, seeds_str) = lines
+        let (_, mut seeds_str) = lines
             .next()
             .expect("header line")
             .split_once(":")
             .expect("header is formated");
-        let seeds = seeds_str
-            .trim()
-            .split_whitespace()
-            .map(|s| s.parse::<u64>().expect("nums"))
-            .collect();
-
+        let mut seeds = Vec::new();
+        loop {
+            match parse_pair(seeds_str.trim()) {
+                Ok((range, rest)) => {
+                    seeds.push(range);
+                    seeds_str = rest;
+                },
+                Err(other) => {println!("{}", other); break}
+            }
+        }
+        let seeds = seeds;
+        dbg!(&seeds);
         let _ = lines.next();
         process_section!(seed_to_soil_map, lines);
         process_section!(soil_to_fertilizer_map, lines);
@@ -70,15 +87,40 @@ impl From<&str> for InputData {
         }
     }
 }
-
+#[derive(Debug)]
 struct SeedRange {
     range_start: u64,
-    range_end: u64,
+    range_len: u64,
+}
+struct SeedIterator {
+    current: u64,
+    last: u64
+}
+impl Iterator for SeedIterator {
+    type Item = u64;
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current < self.last {
+            self.current += 1;
+            Some(self.current)
+        } else {
+            None
+        }
+    }
+}
+impl IntoIterator for SeedRange {
+    type Item = u64;
+    type IntoIter = SeedIterator;
+    fn into_iter(self) -> Self::IntoIter {
+        Self::IntoIter {
+            current: self.range_start,
+            last: self.range_start + self.range_len,
+        }
+    }
 }
 
 impl From<(u64, u64)> for SeedRange {
     fn from(value: (u64, u64)) -> Self {
-        Self { range_start: value.0, range_end: value.1 }
+        Self { range_start: value.0, range_len: value.1 }
     }
 }
 
@@ -100,12 +142,12 @@ impl Range {
                 destination_range_start, 
             }
         }
-    fn contains(&self, other: &u64) -> bool {
-        self.source_range_start <= *other && *other <= self.source_range_end
+    fn contains(&self, other: u64) -> bool {
+        self.source_range_start <= other && other <= self.source_range_end
     }
-    fn get_value_for(&self, value: &u64) -> Option<u64> {
+    fn get_value_for(&self, value: u64) -> Option<u64> {
         if self.contains(value) {
-            Some(self.destination_range_start + *value - self.source_range_start)
+            Some(self.destination_range_start + value - self.source_range_start)
         } else {
             None
         }
@@ -125,97 +167,92 @@ impl From<&str> for Range {
     }
 }
 fn part1(input : &str) -> u64 {
+    todo!("When I implemented part2 I broke part one parser.
+     Sorry, you can see it going to the previous commit");
+}
+fn part2(input : &str) -> u64 {
     let data = InputData::from(input);
-    let soil: Vec<u64> = data.seeds.clone()
+    data.seeds
         .into_iter()
+        .flat_map(|x|
+            x.into_iter()
+        )
         .map(|seed| {
             let mapped_value = data.seed_to_soil_map
                 .iter()
-                .find_map(|map| map.get_value_for(&seed));
+                .find_map(|map| map.get_value_for(seed));
             match mapped_value{
                 Some(value) => value,
                 None => seed,
             }
         })
-        .collect();
-    let fertilizer: Vec<u64> = soil
-        .into_iter()
+        .map(|seed| {
+            let mapped_value = data.seed_to_soil_map
+                .iter()
+                .find_map(|map| map.get_value_for(seed));
+            match mapped_value{
+                Some(value) => value,
+                None => seed,
+            }
+        })
         .map(|soil| {
             match data.soil_to_fertilizer_map
                 .iter()
-                .find_map(|map| map.get_value_for(&soil)){
+                .find_map(|map| map.get_value_for(soil)){
                     Some(value) => value,
                     None => soil
                 }
         })
-        .collect();
-    let water: Vec<u64> = fertilizer
-        .into_iter()
         .map(|fertilizer| {
             match data.fertilizer_to_water_map
                 .iter()
-                .find_map(|map| map.get_value_for(&fertilizer)){
+                .find_map(|map| map.get_value_for(fertilizer)){
                     Some(value) => value,
                     None => fertilizer
                 }
         })
-        .collect();
-    let light: Vec<u64> = water
-        .into_iter()
         .map(|fertilizer| {
             match data.water_to_light_map
                 .iter()
-                .find_map(|map| map.get_value_for(&fertilizer)){
+                .find_map(|map| map.get_value_for(fertilizer)){
                     Some(value) => value,
                     None => fertilizer
                 }
         })
-        .collect();
-    let temperature: Vec<u64> = light
-        .into_iter()
         .map(|fertilizer| {
             match data.light_to_temperature_map
                 .iter()
-                .find_map(|map| map.get_value_for(&fertilizer)){
+                .find_map(|map| map.get_value_for(fertilizer)){
                     Some(value) => value,
                     None => fertilizer
                 }
         })
-        .collect();
-    let humidity: Vec<u64> = temperature
-        .into_iter()
         .map(|fertilizer| {
             match data.temperature_to_humidity_map
                 .iter()
-                .find_map(|map| map.get_value_for(&fertilizer)){
+                .find_map(|map| map.get_value_for(fertilizer)){
                     Some(value) => value,
                     None => fertilizer
                 }
         })
-        .collect();
-    let location: Vec<u64> = humidity
-        .into_iter()
         .map(|fertilizer| {
             match data.humidity_to_location_map
                 .iter()
-                .find_map(|map| map.get_value_for(&fertilizer)){
+                .find_map(|map| map.get_value_for(fertilizer)){
                     Some(value) => value,
                     None => fertilizer
                 }
         })
-        .collect();
+        .min()
+        .unwrap()
     //let min_location_index = location
       //  .into_iter()
       //  .enumerate()
       //  .min_by(|(_, a), (_ , b)| a.cmp(b))
       //  .map(| (index, _)| index);
-    location.into_iter().min().unwrap()
-}
-fn part2(input : &str) -> u64 {
-    todo!();
 }
 fn main() {
-    println!("{}", part1(INPUT_DATA));
+    println!("{}", part2(INPUT_DATA));
    // println!("{}", part2(INPUT_DATA));
 }
 
