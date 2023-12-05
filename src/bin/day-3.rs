@@ -149,7 +149,8 @@ fn part2(input: &str) -> u32{
 }
 
 fn main() {
-    println!("part 1 solution is {}", part2(INPUT_DATA));
+    println!("part 1 solution is {}", part1(INPUT_DATA));
+    println!("part 2 solution is {}", part2(INPUT_DATA));
 }
 
 #[cfg(test)]
