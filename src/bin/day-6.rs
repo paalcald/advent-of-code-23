@@ -3,8 +3,8 @@ use std::{iter::zip};
 const INPUT_DATA: &str = include_str!("../../data/input_day_6.txt");
 
 fn possible_improvements(time: u64, distance: u64) -> u64 {
-    let t = time as f32;
-    let d = distance as f32;
+    let t = time as f64;
+    let d = distance as f64;
     let lower_sol = (t - (t * t - 4.0 * d).sqrt()) / 2.0;
     let upper_sol = (t + (t * t - 4.0 * d).sqrt()) / 2.0;
     //Since we look for greater, not greater or equal we have to do this
