@@ -66,7 +66,6 @@ impl From<&str> for InputData {
             }
         }
         let seeds = seeds;
-        dbg!(&seeds);
         let _ = lines.next();
         process_section!(seed_to_soil_map, lines);
         process_section!(soil_to_fertilizer_map, lines);
