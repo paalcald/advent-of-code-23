@@ -2,24 +2,23 @@ use std::{iter::zip};
 
 const INPUT_DATA: &str = include_str!("../../data/input_day_6.txt");
 
-fn possible_improvements(time: u64, distance: u64) -> u64 {
+fn possible_improvements(time: u64, distance: u64) -> u64{
     let t = time as f64;
     let d = distance as f64;
     let lower_sol = (t - (t * t - 4.0 * d).sqrt()) / 2.0;
     let upper_sol = (t + (t * t - 4.0 * d).sqrt()) / 2.0;
     //Since we look for greater, not greater or equal we have to do this
     let lower_bound = if lower_sol.ceil() == lower_sol {
-        lower_sol.ceil() as u64 + 1
+        lower_sol.ceil() + 1.0
     } else {
-        lower_sol.ceil() as u64
+        lower_sol.ceil()
     };
     let upper_bound = if upper_sol.floor() == upper_sol {
-        (upper_sol.floor() as u64) - 1
+        upper_sol.floor() + 1.0
     } else {
-        upper_sol.floor() as u64
+        upper_sol.floor()
     };
-    dbg!(lower_bound, upper_bound);
-    upper_bound - lower_bound + 1
+    (upper_bound - lower_bound + 1.0) as u64
 }
 
 macro_rules! parse_input {
